@@ -7,21 +7,35 @@ package member_client;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
-import java.net.InetAddress;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import javax.swing.*;
+import java.net.Socket;
+import java.net.*;
+import java.io.*;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author Han Lim
  */
-public class Member_client {
+public class Member_client implements Serializable {
 
     public JFrame userFrame, registerFrame;
     Thread myThread;
-    
+    InetAddress addr;
+    Socket socket;
     public void register() {
+        try{
+//            addr = InetAddress.getByName("127.0.0.1");
+            socket = new Socket("localhost",2000/*, addr, 13123*/);
+        } catch(IOException e) {
+            System.out.println(e);
+        }
+        
         ArrayList profileChosen = new ArrayList();
         String profileType[] = {"opera", "pop music", "rock music"};
         registerFrame = new JFrame("Registration");
@@ -57,7 +71,28 @@ public class Member_client {
         
         btnRegister.setBounds(20, 250, 100, 20);
         btnRegister.addActionListener((ActionEvent e) -> {
-            
+            if(txtName.getText().trim().isEmpty() || txtPlace.getText().trim().isEmpty() || txtDob.getText().trim().isEmpty() || profileChosen.size() < 1){
+                JOptionPane.showMessageDialog(null, "Please fill in all the field", "Invalid input", JOptionPane.INFORMATION_MESSAGE);
+            }
+            else {
+                ArrayList al = new ArrayList();
+                al.add(txtName.getText());
+                al.add(txtPlace.getText());
+                al.add(txtDob.getText());
+                Iterator<String> iterator = profileChosen.iterator();
+		while (iterator.hasNext()) {
+                        al.add(iterator.next());
+		}
+                try {
+                    OutputStream os = socket.getOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(os);
+                    oos.writeObject(al);
+                    
+                }catch(IOException ex){
+                    System.out.println(ex);
+                    JOptionPane.showMessageDialog(null, "Connection refused, please check your connection", "Connection refused", JOptionPane.INFORMATION_MESSAGE);
+                }
+            }
         });
         btnCancel.setBounds(150, 250, 100, 20);
         btnCancel.addActionListener((ActionEvent e) -> {
@@ -74,7 +109,6 @@ public class Member_client {
                         txtProfile.append(iterator.next() + "\n");
 		}
             }
-                
         });
         cbProfile.setBounds(400, 40, 200, 20);
         
@@ -101,7 +135,9 @@ public class Member_client {
         registerFrame.setVisible(true);
         
     }
+
     public static void main(String[] args) {
-        new Member_client().register();
+        Member_client m = new Member_client();
+        m.register();
     }
 }
