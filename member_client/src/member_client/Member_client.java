@@ -12,11 +12,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import javax.swing.*;
 import java.net.Socket;
-import java.net.*;
 import java.io.*;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 
 /**
  *
@@ -24,10 +21,8 @@ import java.util.logging.Logger;
  */
 public class Member_client implements Serializable {
 
-    public JFrame userFrame, registerFrame;
-    Thread myThread;
-    InetAddress addr;
-    Socket socket;
+    public JFrame mainFrame, registerFrame;
+    public Socket socket;
     public void register() {
         try{
 //            addr = InetAddress.getByName("127.0.0.1");
@@ -38,7 +33,7 @@ public class Member_client implements Serializable {
         
         ArrayList profileChosen = new ArrayList();
         String profileType[] = {"opera", "pop music", "rock music"};
-        registerFrame = new JFrame("Registration");
+        registerFrame = new JFrame("Music Social Network - Registration");
         
         JLabel lblName = new JLabel("Username", SwingConstants.RIGHT);
         JLabel lblPlace = new JLabel("Place of Birth", SwingConstants.RIGHT);
@@ -87,7 +82,6 @@ public class Member_client implements Serializable {
                     OutputStream os = socket.getOutputStream();
                     ObjectOutputStream oos = new ObjectOutputStream(os);
                     oos.writeObject(al);
-                    
                 }catch(IOException ex){
                     System.out.println(ex);
                     JOptionPane.showMessageDialog(null, "Connection refused, please check your connection", "Connection refused", JOptionPane.INFORMATION_MESSAGE);
@@ -96,7 +90,7 @@ public class Member_client implements Serializable {
         });
         btnCancel.setBounds(150, 250, 100, 20);
         btnCancel.addActionListener((ActionEvent e) -> {
-            System.exit(0);
+//            System.exit(0);
         });
         btnAddProfile.setBounds(650, 40, 100, 20);
         btnAddProfile.addActionListener((ActionEvent e) -> {
@@ -134,10 +128,84 @@ public class Member_client implements Serializable {
         registerFrame.setBounds(100, 100, 800, 350);
         registerFrame.setVisible(true);
         
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                
+            }
+        });
     }
 
     public static void main(String[] args) {
         Member_client m = new Member_client();
-        m.register();
+//        m.register();
+        m.mainApp();
+    }
+    
+    public void mainApp(){
+        mainFrame = new JFrame("NTU Music Social Network - Username: ");
+        
+        JLabel lblFriends = new JLabel("Friends");
+        JLabel lblInfo = new JLabel("Info");
+        JLabel lblSongs = new JLabel("Shared songs");
+        JLabel lblFriendPost =  new JLabel("Friend Post");
+        JLabel lblUserPost = new JLabel("Post: ");
+        JLabel lblOnline = new JLabel("Online Users");
+        JLabel lblRequest = new JLabel("Friendship Request from");
+        
+        JButton btnPlay = new JButton("Play");
+        JButton btnChat = new JButton("Chat");
+        JButton btnSendPost = new JButton("Send");
+        JButton btnRequest = new JButton("Request Friendship");
+        JButton btnAccept = new JButton("Accept");
+        JButton btnRefuse = new JButton("Refuse");
+        
+        JTextArea txtAPost = new JTextArea();
+        
+        JTextField txtFPost = new JTextField();
+        
+        lblFriends.setBounds(20,20,100,20);
+        lblInfo.setBounds(200,20,100,20);
+        lblSongs.setBounds(400,20,100,20);
+        lblFriendPost.setBounds(20,260,100,20);
+        lblUserPost.setBounds(20, 440, 100, 30);
+        lblOnline.setBounds(50, 480, 200, 30);
+        lblRequest.setBounds(320, 480, 200, 30);
+        
+        btnChat.setBounds(50, 220, 100, 30);
+        btnPlay.setBounds(400, 220, 100, 30);
+        btnSendPost.setBounds(465, 440, 100, 30);
+        btnRequest.setBounds(190, 520, 100, 50);
+        btnAccept.setBounds(480, 520, 100, 50);
+        btnRefuse.setBounds(480, 590, 100, 50);
+        
+        txtAPost.setBounds(20, 280, 550, 150);
+        txtAPost.setEditable(false);
+        
+        txtFPost.setBounds(70, 440, 380, 30);
+        
+        mainFrame.add(lblFriends);
+        mainFrame.add(lblInfo);
+        mainFrame.add(lblSongs);
+        mainFrame.add(lblFriendPost);
+        mainFrame.add(lblUserPost);
+        mainFrame.add(lblOnline);
+        mainFrame.add(lblRequest);
+        
+        mainFrame.add(btnChat);
+        mainFrame.add(btnPlay);
+        mainFrame.add(btnSendPost);
+        mainFrame.add(btnAccept);
+        mainFrame.add(btnRequest);
+        mainFrame.add(btnRefuse);
+        
+        mainFrame.add(txtAPost);
+        mainFrame.add(txtFPost);
+        
+        mainFrame.setResizable(false);
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        mainFrame.setLayout(null);
+        mainFrame.setBounds(100, 100, 600, 800);
+        mainFrame.setVisible(true);
     }
 }

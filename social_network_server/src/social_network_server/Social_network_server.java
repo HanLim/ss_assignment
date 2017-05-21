@@ -9,6 +9,9 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 /**
@@ -36,34 +39,51 @@ public class Social_network_server {
             } catch (IOException e) {
                 System.out.println("I/O error: " + e);
             }
-            new EchoThread(socket).start();               
+            new Registration(socket).start();               
         }
         
     }
     
 }
 
-class EchoThread extends Thread {
+class Registration extends Thread {
     protected Socket socket;
 
-    public EchoThread(Socket clientSocket) {
+    public Registration(Socket clientSocket) {
         this.socket = clientSocket;
     }
 
     public void run() {
        while(true) {
-           try{
+        try{
             InputStream is = socket.getInputStream();
             ObjectInputStream ois = new ObjectInputStream(is);
             ArrayList al = (ArrayList)ois.readObject();
-            System.out.println(al);
-            System.out.println(socket.getRemoteSocketAddress().toString());
-           } catch (Exception e){
+            try{
+                Path p = Paths.get("users/info");
+                if(!Files.exists(p)){
+                    System.out.println("a");
+                    (new File("users")).mkdir();
+                }
+                String name = "users/" + al.get(0).toString() + ".txt";
+                File file = new File(name);
+                file.createNewFile();
+                try (PrintWriter  writer = new PrintWriter(file)) {
+                    Iterator<String> iterator = al.iterator();
+                    while (iterator.hasNext()) {
+                        writer.println(iterator.next());
+                    }
+                    writer.println(socket.getRemoteSocketAddress().toString());
+                    writer.flush();
+                    writer.close();
+                }
+            } catch (IOException e) {System.out.println(e);}
+        } catch (Exception e){
                System.out.println(e);
                try {
                    socket.close();
                } catch (IOException ex) {
-                   Logger.getLogger(EchoThread.class.getName()).log(Level.SEVERE, null, ex);
+                   Logger.getLogger(Registration.class.getName()).log(Level.SEVERE, null, ex);
                }
                return;
            }
