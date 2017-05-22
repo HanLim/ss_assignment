@@ -13,6 +13,8 @@ import java.util.Iterator;
 import javax.swing.*;
 import java.net.Socket;
 import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -232,14 +234,60 @@ public class Member_client implements Serializable {
         mainFrame.setVisible(true);
         try{
             socket = new Socket("localhost", 2000);
-            os = socket.getOutputStream();
-            oos = new ObjectOutputStream(os);
-            oos.writeUTF("online");
-            oos.flush();
-            is = socket.getInputStream();
-            ois = new ObjectInputStream(is);
-            ArrayList al = (ArrayList)ois.readObject();
-            System.out.println(al);
-        } catch (Exception e){System.out.println(e);}
+        } catch (IOException ex) { 
+            Logger.getLogger(Member_client.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        new onlinUser(socket, pnlFriend, txtAInfo).start();
+    }
+    
+    class onlinUser extends Thread {
+        protected Socket socket;
+        protected JPanel panel;
+        protected JTextArea area;
+        public onlinUser (Socket socket, JPanel panel, JTextArea area){
+            this.socket = socket;
+            this.panel = panel;
+            this.area = area;
+        }
+        public void run(){
+            try{
+                
+                os = socket.getOutputStream();
+                oos = new ObjectOutputStream(os);
+                oos.writeUTF("online");
+                oos.flush();
+                is = socket.getInputStream();
+                ois = new ObjectInputStream(is);
+                ArrayList al = (ArrayList)ois.readObject();
+                Iterator<String> iterator = al.iterator();
+                JButton tempBtn;
+                while (iterator.hasNext()) {
+                    String username = iterator.next();
+                    tempBtn = new JButton(username);
+                    tempBtn.setBounds(0,0,100,100);
+                    tempBtn.addActionListener((ActionEvent e) -> {
+                        try {
+                            os = socket.getOutputStream();
+                            oos = new ObjectOutputStream(os);
+                            oos.writeUTF(username);
+                            oos.flush();
+                            is = socket.getInputStream();
+                            ois = new ObjectInputStream(is);
+                            ArrayList info = (ArrayList)ois.readObject();
+                            info.remove(info.size() - 1);
+                            Iterator<String> iterateInfo = info.iterator();
+                            area.setText(null);
+                            while(iterateInfo.hasNext()){
+                                area.append(iterateInfo.next()+System.getProperty("line.separator"));
+                            }
+                        } catch (Exception ex) {
+                            Logger.getLogger(Member_client.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        
+                    });
+                    panel.add(tempBtn);
+                }
+            } catch (Exception e){System.out.println(e);}
+        }      
     }
 }

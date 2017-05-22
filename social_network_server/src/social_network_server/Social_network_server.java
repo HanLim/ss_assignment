@@ -104,6 +104,16 @@ class ServerThread extends Thread {
                 oos.writeObject(list);
                 oos.flush();
             }
+            else {
+                ArrayList list = new ArrayList();
+                String filename = "users/" + cmd + ".txt";
+                BufferedReader file = new BufferedReader(new FileReader(filename));
+                    String user;
+                    while ((user = file.readLine()) != null) {
+                        list.add(user);
+                    }
+                oos.writeObject(list);
+            }
         } catch (Exception e){
                System.out.println(e);
                try {
@@ -111,9 +121,8 @@ class ServerThread extends Thread {
                     String line;
                     String input = "";
                     while ((line = file.readLine()) != null) {
-                        if (line.contains(username)) {
+                        if (line.equals(username)) {
                             line = "";
-                            break;
                         }
                         input += line + System.getProperty("line.separator");
                     }
