@@ -5,3 +5,5 @@
 /member_client/build/
 /member_client/dist/
 /social_network_server/build/
+*.txt
+/social_network_server/dist/

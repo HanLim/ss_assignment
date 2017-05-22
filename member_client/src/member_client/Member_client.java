@@ -23,10 +23,13 @@ public class Member_client implements Serializable {
 
     public JFrame mainFrame, registerFrame;
     public Socket socket;
+    OutputStream os ;
+    ObjectOutputStream oos;
+    InputStream is;
+    ObjectInputStream ois;
     public void register() {
         try{
-//            addr = InetAddress.getByName("127.0.0.1");
-            socket = new Socket("localhost",2000/*, addr, 13123*/);
+            socket = new Socket("localhost",2000);
         } catch(IOException e) {
             System.out.println(e);
         }
@@ -79,9 +82,13 @@ public class Member_client implements Serializable {
                         al.add(iterator.next());
 		}
                 try {
-                    OutputStream os = socket.getOutputStream();
-                    ObjectOutputStream oos = new ObjectOutputStream(os);
+                    os = socket.getOutputStream();
+                    oos = new ObjectOutputStream(os);
+                    oos.writeUTF("registration");
                     oos.writeObject(al);
+                    oos.flush();
+                    registerFrame.dispose();
+                    mainApp(txtName.getText());
                 }catch(IOException ex){
                     System.out.println(ex);
                     JOptionPane.showMessageDialog(null, "Connection refused, please check your connection", "Connection refused", JOptionPane.INFORMATION_MESSAGE);
@@ -123,7 +130,7 @@ public class Member_client implements Serializable {
         registerFrame.add(cbProfile);
         
         registerFrame.setResizable(false);
-        registerFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        registerFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         registerFrame.setLayout(null);
         registerFrame.setBounds(100, 100, 800, 350);
         registerFrame.setVisible(true);
@@ -138,12 +145,11 @@ public class Member_client implements Serializable {
 
     public static void main(String[] args) {
         Member_client m = new Member_client();
-//        m.register();
-        m.mainApp();
+        m.register();
     }
     
-    public void mainApp(){
-        mainFrame = new JFrame("NTU Music Social Network - Username: ");
+    public void mainApp(String name){
+        mainFrame = new JFrame("NTU Music Social Network - Username: " + name);
         
         JLabel lblFriends = new JLabel("Friends");
         JLabel lblInfo = new JLabel("Info");
@@ -156,13 +162,20 @@ public class Member_client implements Serializable {
         JButton btnPlay = new JButton("Play");
         JButton btnChat = new JButton("Chat");
         JButton btnSendPost = new JButton("Send");
-        JButton btnRequest = new JButton("Request Friendship");
+        JButton btnRequest = new JButton("Add Friend");
         JButton btnAccept = new JButton("Accept");
         JButton btnRefuse = new JButton("Refuse");
         
         JTextArea txtAPost = new JTextArea();
+        JTextArea txtAInfo = new JTextArea();
         
         JTextField txtFPost = new JTextField();
+        
+        JPanel pnlFriend = new JPanel();
+        JPanel pnlSongs = new JPanel();
+        
+        JScrollPane spFriend = new JScrollPane(pnlFriend);
+        JScrollPane spSong = new JScrollPane(pnlSongs);
         
         lblFriends.setBounds(20,20,100,20);
         lblInfo.setBounds(200,20,100,20);
@@ -175,14 +188,19 @@ public class Member_client implements Serializable {
         btnChat.setBounds(50, 220, 100, 30);
         btnPlay.setBounds(400, 220, 100, 30);
         btnSendPost.setBounds(465, 440, 100, 30);
-        btnRequest.setBounds(190, 520, 100, 50);
+        btnRequest.setBounds(180, 520, 100, 50);
         btnAccept.setBounds(480, 520, 100, 50);
         btnRefuse.setBounds(480, 590, 100, 50);
         
         txtAPost.setBounds(20, 280, 550, 150);
         txtAPost.setEditable(false);
+        txtAInfo.setBounds(200, 50, 170, 150);
+        txtAInfo.setEditable(false);
         
         txtFPost.setBounds(70, 440, 380, 30);
+        
+        spFriend.setBounds(20, 50, 170, 150);
+        spSong.setBounds(400, 50, 170, 150);
         
         mainFrame.add(lblFriends);
         mainFrame.add(lblInfo);
@@ -200,12 +218,28 @@ public class Member_client implements Serializable {
         mainFrame.add(btnRefuse);
         
         mainFrame.add(txtAPost);
+        mainFrame.add(txtAInfo);
+        
         mainFrame.add(txtFPost);
+        
+        mainFrame.add(spFriend);
+        mainFrame.add(spSong);
         
         mainFrame.setResizable(false);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setLayout(null);
         mainFrame.setBounds(100, 100, 600, 800);
         mainFrame.setVisible(true);
+        try{
+            socket = new Socket("localhost", 2000);
+            os = socket.getOutputStream();
+            oos = new ObjectOutputStream(os);
+            oos.writeUTF("online");
+            oos.flush();
+            is = socket.getInputStream();
+            ois = new ObjectInputStream(is);
+            ArrayList al = (ArrayList)ois.readObject();
+            System.out.println(al);
+        } catch (Exception e){System.out.println(e);}
     }
 }
