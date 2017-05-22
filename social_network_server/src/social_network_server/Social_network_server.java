@@ -40,14 +40,15 @@ public class Social_network_server {
             } catch (IOException e) {
                 System.out.println("I/O error: " + e);
             }
-            new ServerThread(socket).start();               
+            
+            new Thread(new ServerThread(socket)).start();
         }
         
     }
     
 }
 
-class ServerThread extends Thread {
+class ServerThread implements Runnable {
     protected Socket socket;
 
     public ServerThread(Socket clientSocket) {
@@ -104,6 +105,22 @@ class ServerThread extends Thread {
                 oos.writeObject(list);
                 oos.flush();
             }
+            else if(cmd.equals("offline")) {
+                username = ois.readUTF();
+                BufferedReader file = new BufferedReader(new FileReader("online-users.txt"));
+                    String line;
+                    String input = "";
+                    while ((line = file.readLine()) != null) {
+                        if (line.equals(username)) {
+                            line = "";
+                        }
+                        input += line + System.getProperty("line.separator");
+                    }
+                    FileOutputStream File = new FileOutputStream("online-users.txt");
+                    File.write(input.getBytes());
+                    file.close();
+                    File.close();
+            }
             else {
                 ArrayList list = new ArrayList();
                 String filename = "users/" + cmd + ".txt";
@@ -117,19 +134,6 @@ class ServerThread extends Thread {
         } catch (Exception e){
                System.out.println(e);
                try {
-                    BufferedReader file = new BufferedReader(new FileReader("online-users.txt"));
-                    String line;
-                    String input = "";
-                    while ((line = file.readLine()) != null) {
-                        if (line.equals(username)) {
-                            line = "";
-                        }
-                        input += line + System.getProperty("line.separator");
-                    }
-                    FileOutputStream File = new FileOutputStream("online-users.txt");
-                    File.write(input.getBytes());
-                    file.close();
-                    File.close();
                     socket.close();
                } catch (IOException ex) {
                    Logger.getLogger(ServerThread.class.getName()).log(Level.SEVERE, null, ex);

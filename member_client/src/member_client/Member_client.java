@@ -136,13 +136,6 @@ public class Member_client implements Serializable {
         registerFrame.setLayout(null);
         registerFrame.setBounds(100, 100, 800, 350);
         registerFrame.setVisible(true);
-        
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                
-            }
-        });
     }
 
     public static void main(String[] args) {
@@ -237,10 +230,30 @@ public class Member_client implements Serializable {
         } catch (IOException ex) { 
             Logger.getLogger(Member_client.class.getName()).log(Level.SEVERE, null, ex);
         }
-        new onlinUser(socket, pnlFriend, txtAInfo).start();
+        new Thread(new onlinUser(socket, pnlFriend, txtAInfo)).start();
+        
+        Runtime.getRuntime().addShutdownHook(new Thread(new logout(socket, name)));
     }
     
-    class onlinUser extends Thread {
+    class logout implements Runnable{
+        protected Socket socket;
+        protected String name;
+        logout(Socket socket, String name){
+            this.socket = socket;
+            this.name = name;
+        }
+        public void run() {
+            try{
+                    os = socket.getOutputStream();
+                    oos = new ObjectOutputStream(os);
+                    oos.writeUTF("offline");
+                    oos.writeUTF(name);
+                    oos.flush();
+                } catch(Exception e) {System.out.println(e);}
+        }
+    }
+    
+    class onlinUser implements Runnable{
         protected Socket socket;
         protected JPanel panel;
         protected JTextArea area;
@@ -250,8 +263,8 @@ public class Member_client implements Serializable {
             this.area = area;
         }
         public void run(){
+            
             try{
-                
                 os = socket.getOutputStream();
                 oos = new ObjectOutputStream(os);
                 oos.writeUTF("online");
