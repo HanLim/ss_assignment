@@ -103,6 +103,13 @@ class ServerThread implements Runnable {
                         list.add(user);
                     }
                 oos.writeObject(list);
+                ArrayList postList = new ArrayList();
+                BufferedReader postFile = new BufferedReader(new FileReader("posts.txt"));
+                    String post;
+                    while ((post = postFile.readLine()) != null) {
+                        postList.add(post);
+                    }
+                oos.writeObject(postList);
                 oos.flush();
             }
             else if(cmd.equals("offline")) {
@@ -111,15 +118,25 @@ class ServerThread implements Runnable {
                     String line;
                     String input = "";
                     while ((line = file.readLine()) != null) {
-                        if (line.equals(username)) {
-                            line = "";
+                        if (line.equals(username) == false) {
+                            input += line + System.getProperty("line.separator");
                         }
-                        input += line + System.getProperty("line.separator");
                     }
                     FileOutputStream File = new FileOutputStream("online-users.txt");
                     File.write(input.getBytes());
                     file.close();
                     File.close();
+            }
+            else if(cmd.equals("post")){
+                try{
+                    Path p = Paths.get("posts.txt");
+                    if(!Files.exists(p)){
+                        File txt = new File("posts.txt");
+                        txt.createNewFile();
+                    }
+                    String post = ois.readUTF();
+                    Files.write(Paths.get("posts.txt"), (post+ System.getProperty("line.separator")).getBytes(), StandardOpenOption.APPEND);
+                } catch (IOException e) {System.out.println(e);}
             }
             else {
                 ArrayList list = new ArrayList();

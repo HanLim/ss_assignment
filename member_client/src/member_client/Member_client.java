@@ -15,6 +15,9 @@ import java.net.Socket;
 import java.io.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 /**
@@ -76,9 +79,9 @@ public class Member_client implements Serializable {
             }
             else {
                 ArrayList al = new ArrayList();
-                al.add(txtName.getText());
-                al.add(txtPlace.getText());
-                al.add(txtDob.getText());
+                al.add(txtName.getText().trim());
+                al.add(txtPlace.getText().trim());
+                al.add(txtDob.getText().trim());
                 Iterator<String> iterator = profileChosen.iterator();
 		while (iterator.hasNext()) {
                         al.add(iterator.next());
@@ -90,7 +93,7 @@ public class Member_client implements Serializable {
                     oos.writeObject(al);
                     oos.flush();
                     registerFrame.dispose();
-                    mainApp(txtName.getText());
+                    mainApp(txtName.getText().trim());
                 }catch(IOException ex){
                     System.out.println(ex);
                     JOptionPane.showMessageDialog(null, "Connection refused, please check your connection", "Connection refused", JOptionPane.INFORMATION_MESSAGE);
@@ -99,7 +102,7 @@ public class Member_client implements Serializable {
         });
         btnCancel.setBounds(150, 250, 100, 20);
         btnCancel.addActionListener((ActionEvent e) -> {
-//            System.exit(0);
+            System.exit(0);
         });
         btnAddProfile.setBounds(650, 40, 100, 20);
         btnAddProfile.addActionListener((ActionEvent e) -> {
@@ -183,6 +186,13 @@ public class Member_client implements Serializable {
         btnChat.setBounds(50, 220, 100, 30);
         btnPlay.setBounds(400, 220, 100, 30);
         btnSendPost.setBounds(465, 440, 100, 30);
+        btnSendPost.addActionListener((ActionEvent e) -> {
+            if(!txtFPost.getText().trim().isEmpty()){
+                String post = name + ": " + txtFPost.getText().trim();
+                new Thread(new sendPost(socket, post)).start();
+                txtFPost.setText(null);
+            }
+        });
         btnRequest.setBounds(180, 520, 100, 50);
         btnAccept.setBounds(480, 520, 100, 50);
         btnRefuse.setBounds(480, 590, 100, 50);
@@ -230,9 +240,29 @@ public class Member_client implements Serializable {
         } catch (IOException ex) { 
             Logger.getLogger(Member_client.class.getName()).log(Level.SEVERE, null, ex);
         }
-        new Thread(new onlinUser(socket, pnlFriend, txtAInfo)).start();
-        
+        onlineData scheduled = new onlineData(socket, pnlFriend, txtAInfo, txtAPost);
+        Timer timer = new Timer(true);
+        timer.scheduleAtFixedRate(scheduled, 0, 2*1000);
         Runtime.getRuntime().addShutdownHook(new Thread(new logout(socket, name)));
+    }
+    
+    class sendPost implements Runnable{
+        protected Socket socket;
+        protected String post;
+        sendPost(Socket socket, String post){
+            this.socket = socket;
+            this.post = post;
+        }
+        public void run() {
+            try{
+                Socket s = new Socket("localhost", 2000);
+                    OutputStream os = s.getOutputStream();
+                ObjectOutputStream    oos = new ObjectOutputStream(os);
+                    oos.writeUTF("post");
+                    oos.writeUTF(post);
+                    oos.flush();
+                } catch(Exception e) {System.out.println(e);}
+        }
     }
     
     class logout implements Runnable{
@@ -250,20 +280,23 @@ public class Member_client implements Serializable {
                     oos.writeUTF(name);
                     oos.flush();
                 } catch(Exception e) {System.out.println(e);}
+           
         }
     }
     
-    class onlinUser implements Runnable{
+    class onlineData extends TimerTask implements Runnable{
         protected Socket socket;
         protected JPanel panel;
         protected JTextArea area;
-        public onlinUser (Socket socket, JPanel panel, JTextArea area){
+        protected JTextArea postArea;
+        public onlineData (Socket socket, JPanel panel, JTextArea area, JTextArea postArea){
             this.socket = socket;
             this.panel = panel;
             this.area = area;
+            this.postArea = postArea;
         }
+        @Override
         public void run(){
-            
             try{
                 os = socket.getOutputStream();
                 oos = new ObjectOutputStream(os);
@@ -274,8 +307,10 @@ public class Member_client implements Serializable {
                 ArrayList al = (ArrayList)ois.readObject();
                 Iterator<String> iterator = al.iterator();
                 JButton tempBtn;
+                panel.removeAll();
                 while (iterator.hasNext()) {
                     String username = iterator.next();
+                    
                     tempBtn = new JButton(username);
                     tempBtn.setBounds(0,0,100,100);
                     tempBtn.addActionListener((ActionEvent e) -> {
@@ -299,6 +334,14 @@ public class Member_client implements Serializable {
                         
                     });
                     panel.add(tempBtn);
+                }
+                panel.revalidate();
+                panel.repaint();
+                ArrayList al2 = (ArrayList)ois.readObject();
+                Iterator<String>iterator2 = al2.iterator();
+                postArea.setText(null);
+                while (iterator2.hasNext()) {
+                    postArea.append(iterator2.next() + System.getProperty("line.separator"));
                 }
             } catch (Exception e){System.out.println(e);}
         }      
