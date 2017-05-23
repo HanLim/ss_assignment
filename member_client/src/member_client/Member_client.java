@@ -153,20 +153,15 @@ public class Member_client implements Serializable {
     public void mainApp(String name){
         mainFrame = new JFrame("NTU Music Social Network - Username: " + name);
         
-        JLabel lblFriends = new JLabel("Friends");
+        JLabel lblFriends = new JLabel("Online Users");
         JLabel lblInfo = new JLabel("Info");
         JLabel lblSongs = new JLabel("Shared songs");
-        JLabel lblFriendPost =  new JLabel("Friend Post");
-        JLabel lblUserPost = new JLabel("Post: ");
-        JLabel lblOnline = new JLabel("Online Users");
-        JLabel lblRequest = new JLabel("Friendship Request from");
+        JLabel lblFriendPost =  new JLabel("Messages");
+        JLabel lblUserPost = new JLabel("Message: ");
         
-        JButton btnPlay = new JButton("Play");
-        JButton btnChat = new JButton("Chat");
+        JButton btnPlay = new JButton("Upload");
         JButton btnSendPost = new JButton("Send");
-        JButton btnRequest = new JButton("Add Friend");
-        JButton btnAccept = new JButton("Accept");
-        JButton btnRefuse = new JButton("Refuse");
+
         
         JTextArea txtAPost = new JTextArea();
         JTextArea txtAInfo = new JTextArea();
@@ -185,10 +180,7 @@ public class Member_client implements Serializable {
         lblSongs.setBounds(400,20,100,20);
         lblFriendPost.setBounds(20,260,100,20);
         lblUserPost.setBounds(20, 440, 100, 30);
-        lblOnline.setBounds(50, 480, 200, 30);
-        lblRequest.setBounds(320, 480, 200, 30);
         
-        btnChat.setBounds(50, 220, 100, 30);
         btnPlay.setBounds(400, 220, 100, 30);
         btnPlay.addActionListener((ActionEvent e) -> {
             new Thread(new UploadMusic()).start();
@@ -201,9 +193,6 @@ public class Member_client implements Serializable {
                 txtFPost.setText(null);
             }
         });
-        btnRequest.setBounds(180, 520, 100, 50);
-        btnAccept.setBounds(480, 520, 100, 50);
-        btnRefuse.setBounds(480, 590, 100, 50);
         
         spPost.setBounds(20, 280, 550, 150);
         txtAPost.setEditable(false);
@@ -220,15 +209,9 @@ public class Member_client implements Serializable {
         mainFrame.add(lblSongs);
         mainFrame.add(lblFriendPost);
         mainFrame.add(lblUserPost);
-        mainFrame.add(lblOnline);
-        mainFrame.add(lblRequest);
         
-        mainFrame.add(btnChat);
         mainFrame.add(btnPlay);
         mainFrame.add(btnSendPost);
-        mainFrame.add(btnAccept);
-        mainFrame.add(btnRequest);
-        mainFrame.add(btnRefuse);
         
         mainFrame.add(spPost);
         mainFrame.add(txtAInfo);
