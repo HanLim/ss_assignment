@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static java.lang.Math.toIntExact;
 /**
  *
  * @author Han Lim
@@ -69,9 +70,8 @@ class ServerThread implements Runnable {
             {
                 ArrayList al = (ArrayList)ois.readObject();
                 username = al.get(0).toString();
-                System.out.println(username);
                 try{
-                    Path p = Paths.get("users/info");
+                    Path p = Paths.get("users");
                     if(!Files.exists(p)){
                         (new File("users")).mkdir();
                     }
@@ -110,6 +110,14 @@ class ServerThread implements Runnable {
                         postList.add(post);
                     }
                 oos.writeObject(postList);
+                ArrayList musicList = new ArrayList();
+                File[] files = new File("music").listFiles();
+                for (File mf : files) {
+                    if (mf.isFile()) {
+                        musicList.add(mf.getAbsolutePath());
+                    }
+                }
+                oos.writeObject(musicList);
                 oos.flush();
             }
             else if(cmd.equals("offline")) {
@@ -137,6 +145,26 @@ class ServerThread implements Runnable {
                     String post = ois.readUTF();
                     Files.write(Paths.get("posts.txt"), (post+ System.getProperty("line.separator")).getBytes(), StandardOpenOption.APPEND);
                 } catch (IOException e) {System.out.println(e);}
+            }
+            else if(cmd.equals("upload")){
+                Path p = Paths.get("music");
+                if(!Files.exists(p)){
+                    (new File("music")).mkdir();
+                }
+                String filename = ois.readUTF();
+                int filesize = toIntExact((long)ois.readObject());
+                DataInputStream dis = new DataInputStream(socket.getInputStream());
+		FileOutputStream fos = new FileOutputStream("music/"+filename);
+		byte[] buffer = new byte[16*1024];
+		
+		int read = 0;
+		int totalRead = 0;
+		int remaining = filesize;
+		while((read = dis.read(buffer, 0, Math.min(buffer.length, remaining))) > 0) {
+			totalRead += read;
+			remaining -= read;
+			fos.write(buffer, 0, read);
+		}
             }
             else {
                 ArrayList list = new ArrayList();

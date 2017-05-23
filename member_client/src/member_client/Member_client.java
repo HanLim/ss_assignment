@@ -5,6 +5,7 @@
  */
 package member_client;
 
+import com.sun.javafx.application.PlatformImpl;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -18,6 +19,8 @@ import java.util.logging.Logger;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
 
 /**
@@ -32,6 +35,7 @@ public class Member_client implements Serializable {
     ObjectOutputStream oos;
     InputStream is;
     ObjectInputStream ois;
+    static MediaPlayer mediaPlayer;
     public void register() {
         try{
             socket = new Socket("localhost",2000);
@@ -166,7 +170,8 @@ public class Member_client implements Serializable {
         
         JTextArea txtAPost = new JTextArea();
         JTextArea txtAInfo = new JTextArea();
-        
+        JScrollPane spPost = new JScrollPane(txtAPost, 
+   JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         JTextField txtFPost = new JTextField();
         
         JPanel pnlFriend = new JPanel();
@@ -185,6 +190,9 @@ public class Member_client implements Serializable {
         
         btnChat.setBounds(50, 220, 100, 30);
         btnPlay.setBounds(400, 220, 100, 30);
+        btnPlay.addActionListener((ActionEvent e) -> {
+            new Thread(new UploadMusic()).start();
+        });
         btnSendPost.setBounds(465, 440, 100, 30);
         btnSendPost.addActionListener((ActionEvent e) -> {
             if(!txtFPost.getText().trim().isEmpty()){
@@ -197,7 +205,7 @@ public class Member_client implements Serializable {
         btnAccept.setBounds(480, 520, 100, 50);
         btnRefuse.setBounds(480, 590, 100, 50);
         
-        txtAPost.setBounds(20, 280, 550, 150);
+        spPost.setBounds(20, 280, 550, 150);
         txtAPost.setEditable(false);
         txtAInfo.setBounds(200, 50, 170, 150);
         txtAInfo.setEditable(false);
@@ -222,7 +230,7 @@ public class Member_client implements Serializable {
         mainFrame.add(btnRequest);
         mainFrame.add(btnRefuse);
         
-        mainFrame.add(txtAPost);
+        mainFrame.add(spPost);
         mainFrame.add(txtAInfo);
         
         mainFrame.add(txtFPost);
@@ -240,12 +248,45 @@ public class Member_client implements Serializable {
         } catch (IOException ex) { 
             Logger.getLogger(Member_client.class.getName()).log(Level.SEVERE, null, ex);
         }
-        onlineData scheduled = new onlineData(socket, pnlFriend, txtAInfo, txtAPost);
+        onlineData scheduled = new onlineData(socket, pnlFriend, txtAInfo, txtAPost, spPost, pnlSongs);
         Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(scheduled, 0, 2*1000);
         Runtime.getRuntime().addShutdownHook(new Thread(new logout(socket, name)));
     }
-    
+    class UploadMusic implements Runnable {
+        public void run(){
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+            int result = fileChooser.showOpenDialog(mainFrame);
+            if (result == JFileChooser.APPROVE_OPTION) {
+               File selectedFile = fileChooser.getSelectedFile();
+                try {
+                    Socket s = new Socket("localhost", 2000);                    
+                    OutputStream os = s.getOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(os);
+                    oos.writeUTF("upload");
+                    oos.flush();
+                    oos.writeUTF(selectedFile.getName());
+                    oos.flush();
+                    oos.writeObject(selectedFile.length());
+                    oos.flush();
+                    System.out.println("selected");
+                    DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+                    FileInputStream fis = new FileInputStream(selectedFile);
+                    byte[] buffer = new byte[4096];
+
+                    while (fis.read(buffer) > 0) {
+                            dos.write(buffer);
+                    }
+                    dos.flush();
+                } catch (IOException ex) {
+                    Logger.getLogger(Member_client.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
+            }
+        }
+        
+    }
     class sendPost implements Runnable{
         protected Socket socket;
         protected String post;
@@ -279,6 +320,9 @@ public class Member_client implements Serializable {
                     oos.writeUTF("offline");
                     oos.writeUTF(name);
                     oos.flush();
+                    oos.close();
+                    os.close();
+                    socket.close();
                 } catch(Exception e) {System.out.println(e);}
            
         }
@@ -289,11 +333,15 @@ public class Member_client implements Serializable {
         protected JPanel panel;
         protected JTextArea area;
         protected JTextArea postArea;
-        public onlineData (Socket socket, JPanel panel, JTextArea area, JTextArea postArea){
+        protected JScrollPane postpane;
+        protected JPanel songpane; 
+        public onlineData (Socket socket, JPanel panel, JTextArea area, JTextArea postArea, JScrollPane postpane, JPanel songpane){
             this.socket = socket;
             this.panel = panel;
             this.area = area;
             this.postArea = postArea;
+            this.postpane = postpane;
+            this.songpane = songpane;
         }
         @Override
         public void run(){
@@ -343,6 +391,29 @@ public class Member_client implements Serializable {
                 while (iterator2.hasNext()) {
                     postArea.append(iterator2.next() + System.getProperty("line.separator"));
                 }
+                postArea.setCaretPosition(postArea.getDocument().getLength());
+                
+                ArrayList musiclist = (ArrayList)ois.readObject();
+                Iterator<String> musicIterator = musiclist.iterator();
+                songpane.removeAll();
+                while (musicIterator.hasNext()) {
+                    String songname = musicIterator.next();
+                    tempBtn = new JButton(songname);
+                    tempBtn.setBounds(0,0,100,100);
+                    tempBtn.addActionListener((ActionEvent e) -> {
+                        try {
+                            PlatformImpl.startup(() -> {});
+                            Media hit = new Media(new File(songname).toURI().toString());
+                            mediaPlayer = new MediaPlayer(hit);
+                            mediaPlayer.play();
+                        } catch (Exception ex) {
+                            Logger.getLogger(Member_client.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        
+                    });
+                    songpane.add(tempBtn);
+                }
+                songpane.revalidate();
             } catch (Exception e){System.out.println(e);}
         }      
     }
